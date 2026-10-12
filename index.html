@@ -37,7 +37,8 @@ body{
   font-family:"M PLUS Rounded 1c","Hiragino Maru Gothic ProN","Hiragino Sans","Yu Gothic",system-ui,sans-serif;
   overflow:hidden;-webkit-user-select:none;user-select:none;-webkit-tap-highlight-color:transparent;
 }
-.app{height:100%;max-width:820px;margin:0 auto;display:flex;flex-direction:column;padding:8px 12px 10px;gap:8px}
+.app{height:100%;max-width:820px;margin:0 auto;display:flex;flex-direction:column;padding:8px 12px 10px;gap:8px;touch-action:none}
+html,body{overscroll-behavior:none}
 header{display:flex;flex-wrap:wrap;align-items:baseline;justify-content:space-between;gap:4px 12px}
 h1{margin:0;font-size:1.35rem;font-weight:800;letter-spacing:.02em}
 .hud{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 11px;font-weight:800;font-size:.95rem;font-variant-numeric:tabular-nums}
@@ -47,7 +48,7 @@ h1{margin:0;font-size:1.35rem;font-weight:800;letter-spacing:.02em}
 .stage{flex:1 1 auto;min-height:0;min-width:0;overflow:hidden;touch-action:none;display:flex;align-items:center;justify-content:center;position:relative}
 canvas{display:block;border-radius:10px;touch-action:none}
 .overlay{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none}
-.card{pointer-events:auto;background:rgba(15,22,41,.9);color:#eef2fb;border-radius:14px;padding:16px 18px;max-width:min(94%,420px);max-height:100%;overflow:auto;text-align:center;line-height:1.6}
+.card{pointer-events:auto;background:rgba(15,22,41,.9);color:#eef2fb;border-radius:14px;padding:16px 18px;max-width:min(94%,420px);max-height:100%;overflow:auto;touch-action:pan-y;text-align:center;line-height:1.6}
 .card h2{margin:0 0 6px;font-size:1.3rem}
 .card .txt{margin:0 0 12px;font-size:.92rem;color:#c9d3ea}
 .card .btns{display:flex;flex-wrap:wrap;gap:8px;justify-content:center}
@@ -1157,15 +1158,17 @@ function render() {
   drawFx();
 }
 
-/* ================= スワイプ操作（ステージ上） =================
+/* ================= スワイプ操作（画面全体） =================
+  ゲーム画面の外（上下の余白・ボタンのすき間など）も含め、画面のどこでも操作できる。
   指を置いて滑らせた方向へ進む。指を置いたままなら進み続け、
-  そこから別の方向へ少しずらすだけで方向転換。軽くタップすると「ひかり」 */
-const stageEl = document.getElementById("stage");
+  そこから別の方向へ少しずらすだけで方向転換。軽くタップすると「ひかり」。
+  ボタン（十字・ひかり・一時停止）やカードの上では、そちらの操作を優先する */
+const stageEl = document.querySelector(".app");
 const SWIPE_PX = 16;   // この距離（px）動かしたら方向とみなす
 const TAP_MS = 280;    // これより短く、ほとんど動かさなければタップ
 let sw = null;
 stageEl.addEventListener("pointerdown", e => {
-  if (e.pointerType === "mouse" || sw || e.target.closest(".card")) return;
+  if (e.pointerType === "mouse" || sw || e.target.closest(".card, button")) return;
   e.preventDefault(); audioInit();
   try { stageEl.setPointerCapture(e.pointerId); } catch (_) {}
   sw = { id: e.pointerId, ax: e.clientX, ay: e.clientY, t: performance.now(), dir: null, moved: false };
